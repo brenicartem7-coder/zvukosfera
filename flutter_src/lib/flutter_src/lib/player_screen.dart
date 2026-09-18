@@ -336,4 +336,332 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           );
                         },
                       ),
-                      const SizedBox(width: 14),
+                      const SizedBox(width: 14),                      // Кнопка: Следующий
+                      IconButton(
+                        tooltip: 'Следующий трек',
+                        iconSize: 42,
+                        icon: const Icon(Icons.skip_next_rounded),
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          _playerManager.playNext();
+                        },
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  // Обложка-заглушка «Звукосфера»
+  Widget _buildArtPlaceholder(bool isDark, ThemeData theme) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDark
+              ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+              : [const Color(0xFFE2E8F0), const Color(0xFFCBD5E1)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: theme.colorScheme.primary.withOpacity(0.12),
+              ),
+              child: Icon(
+                Icons.music_note_rounded,
+                size: 64,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'ЗВУКОСФЕРА',
+              style: TextStyle(
+                fontSize: 13,
+                letterSpacing: 2.0,
+                fontWeight: FontWeight.w700,
+                color: theme.colorScheme.primary.withOpacity(0.8),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Диалог выбора времени таймера сна (15, 30, 60 минут)
+  void _showSleepTimerDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (ctx) {
+        return StreamBuilder<int?>(
+          stream: _playerManager.sleepTimerStream,
+          initialData: _playerManager.sleepTimerRemainingSeconds,
+          builder: (context, snapshot) {
+            final remaining = snapshot.data;
+
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.timer_rounded, size: 24),
+                            SizedBox(width: 12),
+                            Text(
+                              'Таймер сна',
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.of(ctx).pop(),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    if (remaining != null) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Осталось: ${(remaining ~/ 60).toString().padLeft(2, '0')}:${(remaining % 60).toString().padLeft(2, '0')}',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                _playerManager.cancelSleepTimer();
+                                Navigator.of(ctx).pop();
+                              },
+                              child: const Text('Отключить'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    ListTile(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      leading: const Icon(Icons.alarm),
+                      title: const Text('15 минут'),
+                      onTap: () {
+                        _playerManager.setSleepTimer(15);
+                        Navigator.of(ctx).pop();
+                      },
+                    ),
+                    ListTile(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      leading: const Icon(Icons.alarm),
+                      title: const Text('30 минут'),
+                      onTap: () {
+                        _playerManager.setSleepTimer(30);
+                        Navigator.of(ctx).pop();
+                      },
+                    ),
+                    ListTile(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      leading: const Icon(Icons.alarm),
+                      title: const Text('60 минут'),
+                      onTap: () {
+                        _playerManager.setSleepTimer(60);
+                        Navigator.of(ctx).pop();
+                      },
+                    ),
+                    if (remaining != null)
+                      ListTile(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        leading: const Icon(Icons.timer_off_rounded, color: Colors.redAccent),
+                        title: const Text('Выключить таймер', style: TextStyle(color: Colors.redAccent)),
+                        onTap: () {
+                          _playerManager.cancelSleepTimer();
+                          Navigator.of(ctx).pop();
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // Панель настройки эквалайзера с предустановками (Классика, Рок, Басы, Обычный, Вокал)
+  void _showEqualizerModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        final bandLabels = ['60 Гц', '230 Гц', '910 Гц', '3.6 кГц', '14 кГц'];
+        final presetTitles = {
+          'flat': 'Обычный',
+          'classical': 'Классика',
+          'rock': 'Рок',
+          'bass': 'Басы',
+          'vocal': 'Вокал',
+        };
+
+        return StreamBuilder<void>(
+          stream: _playerManager.equalizerStream,
+          builder: (context, _) {
+            final gains = _playerManager.bandGains;
+            final isEnabled = _playerManager.equalizerEnabled;
+            final activePreset = _playerManager.currentPreset;
+
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.tune_rounded, size: 24),
+                            SizedBox(width: 12),
+                            Text(
+                              'Эквалайзер',
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                        Switch(
+                          value: isEnabled,
+                          onChanged: (val) {
+                            HapticFeedback.mediumImpact();
+                            _playerManager.toggleEqualizer(val);
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'ПРЕДУСТАНОВКИ',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: presetTitles.entries.map((entry) {
+                        final isSelected = activePreset == entry.key;
+                        return ChoiceChip(
+                          label: Text(entry.value),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            if (selected) {
+                              HapticFeedback.selectionClick();
+                              _playerManager.setEqualizerPreset(entry.key);
+                            }
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 16),
+                    // 5-полосные регуляторы частот
+                    Opacity(
+                      opacity: isEnabled ? 1.0 : 0.4,
+                      child: Column(
+                        children: List.generate(5, (index) {
+                          final gain = gains[index];
+                          return Row(
+                            children: [
+                              SizedBox(
+                                width: 60,
+                                child: Text(
+                                  bandLabels[index],
+                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                                ),
+                              ),
+                              Expanded(
+                                child: Slider(
+                                  min: -12.0,
+                                  max: 12.0,
+                                  divisions: 24,
+                                  value: gain,
+                                  onChanged: isEnabled
+                                      ? (val) {
+                                          HapticFeedback.selectionClick();
+                                          _playerManager.setBandGain(index, val);
+                                        }
+                                      : null,
+                                ),
+                              ),
+                              SizedBox(
+                                width: 45,
+                                child: Text(
+                                  '${gain > 0 ? "+" : ""}${gain.toStringAsFixed(0)} дБ',
+                                  textAlign: TextAlign.end,
+                                  style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
+                                ),
+                              ),
+                            ],
+                          );
+                        }),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TextButton.icon(
+                          icon: const Icon(Icons.restart_alt_rounded, size: 18),
+                          label: const Text('Сбросить (0 дБ)'),
+                          onPressed: () {
+                            HapticFeedback.mediumImpact();
+                            _playerManager.resetEqualizer();
+                          },
+                        ),
+                        ElevatedButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          child: const Text('Готово'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
