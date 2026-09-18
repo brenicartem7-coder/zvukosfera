@@ -41,6 +41,21 @@ jobs:
         working-directory: build_project
         run: flutter pub get
 
+      - name: Patch plugins missing AGP8 namespace
+        working-directory: build_project
+        run: |
+          for dir in "$HOME"/.pub-cache/hosted/pub.dev/*android*/; do
+            GRADLE_FILE="$dir/android/build.gradle"
+            MANIFEST_FILE="$dir/android/src/main/AndroidManifest.xml"
+            if [ -f "$GRADLE_FILE" ] && [ -f "$MANIFEST_FILE" ] && ! grep -q "namespace" "$GRADLE_FILE"; then
+              PKG=$(grep -oP 'package="[^"]+"' "$MANIFEST_FILE" | head -1 | sed 's/package="//;s/"//')
+              if [ -n "$PKG" ]; then
+                echo "Patching namespace '$PKG' into $GRADLE_FILE"
+                sed -i "0,/android {/s//android {\n    namespace '$PKG'/" "$GRADLE_FILE"
+              fi
+            fi
+          done
+
       - name: Generate app launcher icon
         working-directory: build_project
         run: dart run flutter_launcher_icons
