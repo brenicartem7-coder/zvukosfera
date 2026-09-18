@@ -1,0 +1,56 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.5'
+          channel: 'stable'
+
+      - name: Create a fresh Flutter project skeleton
+        run: flutter create --platforms=android --org com.example --project-name zvukosfera build_project
+
+      - name: Drop in the app's custom source files
+        run: |
+          cp flutter_src/pubspec.yaml build_project/pubspec.yaml
+          cp flutter_src/android/app/src/main/AndroidManifest.xml build_project/android/app/src/main/AndroidManifest.xml
+          rm -f build_project/lib/main.dart
+          cp flutter_src/lib/*.dart build_project/lib/
+          mkdir -p build_project/assets
+          cp flutter_src/assets/app_icon.png build_project/assets/app_icon.png
+
+      - name: Install dependencies
+        working-directory: build_project
+        run: flutter pub get
+
+      - name: Generate app launcher icon
+        working-directory: build_project
+        run: dart run flutter_launcher_icons
+
+      - name: Build release APK
+        working-directory: build_project
+        run: flutter build apk --release
+
+      - name: Upload APK as build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zvukosfera-apk
+          path: build_project/build/app/outputs/flutter-apk/app-release.apk
