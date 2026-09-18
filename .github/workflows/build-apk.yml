@@ -22,7 +22,6 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.5'
           channel: 'stable'
 
       - name: Create a fresh Flutter project skeleton
@@ -37,27 +36,9 @@ jobs:
           mkdir -p build_project/assets
           cp flutter_src/assets/app_icon.png build_project/assets/app_icon.png
 
-      - name: Force consistent Java/Kotlin toolchain across all Android modules
-        run: echo "CnN1YnByb2plY3RzIHsKICAgIGFmdGVyRXZhbHVhdGUgeyBwcm9qIC0+CiAgICAgICAgaWYgKHByb2ouaGFzUHJvcGVydHkoJ2FuZHJvaWQnKSkgewogICAgICAgICAgICBwcm9qLmFuZHJvaWQgewogICAgICAgICAgICAgICAgY29tcGlsZU9wdGlvbnMgewogICAgICAgICAgICAgICAgICAgIHNvdXJjZUNvbXBhdGliaWxpdHkgSmF2YVZlcnNpb24uVkVSU0lPTl8xNwogICAgICAgICAgICAgICAgICAgIHRhcmdldENvbXBhdGliaWxpdHkgSmF2YVZlcnNpb24uVkVSU0lPTl8xNwogICAgICAgICAgICAgICAgfQogICAgICAgICAgICB9CiAgICAgICAgfQogICAgICAgIHByb2oudGFza3Mud2l0aFR5cGUob3JnLmpldGJyYWlucy5rb3RsaW4uZ3JhZGxlLnRhc2tzLktvdGxpbkNvbXBpbGUpLmNvbmZpZ3VyZUVhY2ggewogICAgICAgICAgICBrb3RsaW5PcHRpb25zIHsKICAgICAgICAgICAgICAgIGp2bVRhcmdldCA9ICIxNyIKICAgICAgICAgICAgfQogICAgICAgIH0KICAgIH0KfQo=" | base64 -d >> build_project/android/build.gradle
-
       - name: Install dependencies
         working-directory: build_project
         run: flutter pub get
-
-      - name: Patch plugins missing AGP8 namespace
-        working-directory: build_project
-        run: |
-          for dir in "$HOME"/.pub-cache/hosted/pub.dev/*android*/; do
-            GRADLE_FILE="$dir/android/build.gradle"
-            MANIFEST_FILE="$dir/android/src/main/AndroidManifest.xml"
-            if [ -f "$GRADLE_FILE" ] && [ -f "$MANIFEST_FILE" ] && ! grep -q "namespace" "$GRADLE_FILE"; then
-              PKG=$(grep -oP 'package="[^"]+"' "$MANIFEST_FILE" | head -1 | sed 's/package="//;s/"//')
-              if [ -n "$PKG" ]; then
-                echo "Patching namespace '$PKG' into $GRADLE_FILE"
-                sed -i "0,/android {/s//android {\n    namespace '$PKG'/" "$GRADLE_FILE"
-              fi
-            fi
-          done
 
       - name: Generate app launcher icon
         working-directory: build_project
