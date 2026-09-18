@@ -38,27 +38,7 @@ jobs:
           cp flutter_src/assets/app_icon.png build_project/assets/app_icon.png
 
       - name: Force consistent Java/Kotlin toolchain across all Android modules
-        run: |
-          cat >> build_project/android/build.gradle << 'EOF'
-
-subprojects {
-    afterEvaluate { proj ->
-        if (proj.hasProperty('android')) {
-            proj.android {
-                compileOptions {
-                    sourceCompatibility JavaVersion.VERSION_17
-                    targetCompatibility JavaVersion.VERSION_17
-                }
-            }
-        }
-        proj.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-            kotlinOptions {
-                jvmTarget = "17"
-            }
-        }
-    }
-}
-EOF
+        run: echo "CnN1YnByb2plY3RzIHsKICAgIGFmdGVyRXZhbHVhdGUgeyBwcm9qIC0+CiAgICAgICAgaWYgKHByb2ouaGFzUHJvcGVydHkoJ2FuZHJvaWQnKSkgewogICAgICAgICAgICBwcm9qLmFuZHJvaWQgewogICAgICAgICAgICAgICAgY29tcGlsZU9wdGlvbnMgewogICAgICAgICAgICAgICAgICAgIHNvdXJjZUNvbXBhdGliaWxpdHkgSmF2YVZlcnNpb24uVkVSU0lPTl8xNwogICAgICAgICAgICAgICAgICAgIHRhcmdldENvbXBhdGliaWxpdHkgSmF2YVZlcnNpb24uVkVSU0lPTl8xNwogICAgICAgICAgICAgICAgfQogICAgICAgICAgICB9CiAgICAgICAgfQogICAgICAgIHByb2oudGFza3Mud2l0aFR5cGUob3JnLmpldGJyYWlucy5rb3RsaW4uZ3JhZGxlLnRhc2tzLktvdGxpbkNvbXBpbGUpLmNvbmZpZ3VyZUVhY2ggewogICAgICAgICAgICBrb3RsaW5PcHRpb25zIHsKICAgICAgICAgICAgICAgIGp2bVRhcmdldCA9ICIxNyIKICAgICAgICAgICAgfQogICAgICAgIH0KICAgIH0KfQo=" | base64 -d >> build_project/android/build.gradle
 
       - name: Install dependencies
         working-directory: build_project
