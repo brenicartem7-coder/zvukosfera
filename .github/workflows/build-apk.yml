@@ -37,6 +37,29 @@ jobs:
           mkdir -p build_project/assets
           cp flutter_src/assets/app_icon.png build_project/assets/app_icon.png
 
+      - name: Force consistent Java/Kotlin toolchain across all Android modules
+        run: |
+          cat >> build_project/android/build.gradle << 'EOF'
+
+subprojects {
+    afterEvaluate { proj ->
+        if (proj.hasProperty('android')) {
+            proj.android {
+                compileOptions {
+                    sourceCompatibility JavaVersion.VERSION_17
+                    targetCompatibility JavaVersion.VERSION_17
+                }
+            }
+        }
+        proj.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+            kotlinOptions {
+                jvmTarget = "17"
+            }
+        }
+    }
+}
+EOF
+
       - name: Install dependencies
         working-directory: build_project
         run: flutter pub get
